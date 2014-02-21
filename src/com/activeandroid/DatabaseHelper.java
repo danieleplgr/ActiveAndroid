@@ -36,19 +36,35 @@ import com.activeandroid.util.NaturalOrderComparator;
 import com.activeandroid.util.SQLiteUtils;
 
 public final class DatabaseHelper extends SQLiteOpenHelper {
+	
+	public interface OnPreCreateListener {
+		void execute();
+	}
+	
+	public interface OnPostCreateListener{
+		void execute();
+	}
+	
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC CONSTANTS
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public final static String MIGRATION_PATH = "migrations";
-
+	
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public DatabaseHelper(Configuration configuration) {
+	private OnPreCreateListener onPreCreateListener;
+	private OnPostCreateListener onPostCreateListener;
+	
+	public DatabaseHelper(Configuration configuration, OnPreCreateListener onPreCreateListener,
+			OnPostCreateListener onPostCreateListener) {
 		super(configuration.getContext(), configuration.getDatabaseName(), null, configuration.getDatabaseVersion());
 		copyAttachedDatabase(configuration.getContext(), configuration.getDatabaseName());
+		
+		this.onPreCreateListener = onPreCreateListener;
+		this.onPostCreateListener = onPostCreateListener;
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -62,10 +78,22 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
+		// Added 20-02-14 @Daniele
+		Cache.setSQLiteDatabaseInstance(db);
+		if(onPreCreateListener != null){
+			onPreCreateListener.execute();
+		}
+		// End Added 20-02-14 @Daniele
 		executePragmas(db);
 		executeCreate(db);
 		executeMigrations(db, -1, db.getVersion());
 		executeCreateIndex(db);
+		// Added 20-02-14 @Daniele
+		if(onPostCreateListener != null){ 
+			onPostCreateListener.execute();
+		}
+		Cache.setSQLiteDatabaseInstance(null);
+		// End Added 20-02-14 @Daniele
 	}
 
 	@Override

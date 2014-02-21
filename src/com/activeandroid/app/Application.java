@@ -17,12 +17,19 @@ package com.activeandroid.app;
  */
 
 import com.activeandroid.ActiveAndroid;
+import com.activeandroid.DatabaseHelper.OnPreCreateListener;
+import com.activeandroid.DatabaseHelper.OnPostCreateListener;
 
-public class Application extends android.app.Application {
+public abstract class Application extends android.app.Application {
+	
+	public abstract OnPreCreateListener getOnPreCreateListener();
+	
+	public abstract OnPostCreateListener getOnPostCreateListener();
+	
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		ActiveAndroid.initialize(this);
+		ActiveAndroid.initialize(this, getOnPreCreateListener(), getOnPostCreateListener());
 	}
 	
 	@Override

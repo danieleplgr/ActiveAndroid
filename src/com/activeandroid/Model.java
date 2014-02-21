@@ -68,6 +68,10 @@ public abstract class Model {
 
 	public final Long save() {
 		final SQLiteDatabase db = Cache.openDatabase();
+		return save(db);
+	}
+
+	protected Long save(final SQLiteDatabase db) {
 		final ContentValues values = new ContentValues();
 
 		for (Field field : mTableInfo.getFields()) {

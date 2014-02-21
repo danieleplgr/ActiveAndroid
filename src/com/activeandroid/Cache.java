@@ -21,9 +21,10 @@ import java.util.Collection;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.util.LruCache;
-
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
+import com.activeandroid.DatabaseHelper.OnPreCreateListener;
+import com.activeandroid.DatabaseHelper.OnPostCreateListener;
 
 public final class Cache {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -45,6 +46,8 @@ public final class Cache {
 
 	private static boolean sIsInitialized = false;
 
+	private static SQLiteDatabase sQLiteDatabaseInstance;
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -56,7 +59,9 @@ public final class Cache {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public static synchronized void initialize(Configuration configuration) {
+	public static synchronized void initialize(Configuration configuration, 
+			OnPreCreateListener onPreCreateListener, 
+			OnPostCreateListener onPostCreateListener) {
 		if (sIsInitialized) {
 			Log.v("ActiveAndroid already initialized.");
 			return;
@@ -64,7 +69,7 @@ public final class Cache {
 
 		sContext = configuration.getContext();
 		sModelInfo = new ModelInfo(configuration);
-		sDatabaseHelper = new DatabaseHelper(configuration);
+		sDatabaseHelper = new DatabaseHelper(configuration, onPreCreateListener, onPostCreateListener);
 
 		// TODO: It would be nice to override sizeOf here and calculate the memory
 		// actually used, however at this point it seems like the reflection
@@ -99,6 +104,17 @@ public final class Cache {
 	// Database access
 
 	public static synchronized SQLiteDatabase openDatabase() {
+		if(sQLiteDatabaseInstance==null)
+			sQLiteDatabaseInstance = createSQLiteDatabaseInstance();
+		else{
+			if(!sQLiteDatabaseInstance.isOpen()){
+				sQLiteDatabaseInstance = createSQLiteDatabaseInstance();
+			}
+		}
+		return sQLiteDatabaseInstance;
+	}
+
+	private static SQLiteDatabase createSQLiteDatabaseInstance() {
 		return sDatabaseHelper.getWritableDatabase();
 	}
 
@@ -150,5 +166,9 @@ public final class Cache {
 
 	public static synchronized String getTableName(Class<? extends Model> type) {
 		return sModelInfo.getTableInfo(type).getTableName();
+	}
+
+	public static void setSQLiteDatabaseInstance(SQLiteDatabase db) {
+		sQLiteDatabaseInstance = db;
 	}
 }

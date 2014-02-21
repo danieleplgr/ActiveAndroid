@@ -36,7 +36,7 @@ public class ContentProvider extends android.content.ContentProvider {
 
 	@Override
 	public boolean onCreate() {
-		ActiveAndroid.initialize(getConfiguration());
+		ActiveAndroid.initialize(getConfiguration(), null, null);
 		sAuthority = getAuthority();
 
 		final List<TableInfo> tableInfos = new ArrayList<TableInfo>(Cache.getTableInfos());
